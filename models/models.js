@@ -11,6 +11,7 @@ mongoose.connect(process.env.MONGO_URI, {
 });
 
 const exerciseSchema = new mongoose.Schema({
+  userId: { type: String, required: true },
   username: { type: String, required: true },
   description: { type: String, required: true },
   duration: { type: Number, required: true },
@@ -18,7 +19,7 @@ const exerciseSchema = new mongoose.Schema({
 })
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true },
-  _id: { type: String, default: uuidv4}
+  _id: { type: String, default: uuidv4 }
 })
 
 const User = mongoose.model('User', userSchema);

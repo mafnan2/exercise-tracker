@@ -34,6 +34,7 @@ app.post("/api/users/:_id/exercises", (req, res) => {
     if (err) return res.status(500).json({ error: "DB Error" });
     if (!user) return res.status(404).json({ error: "User not found" });
 
+    console.log(user)
     const newExercise = new Exercise({
       userId: user._id,
       username: user.username,
@@ -64,6 +65,39 @@ app.get("/api/users/:_id/exercises", (req, res) => {
     if (!user) return res.status(404).json({ error: "User not found" });
     res.json(user)
   })
+})
+
+app.get("/api/exercises", async (req, res) => {
+  try {
+    const exercises = await Exercise.find();
+    res.json(exercises);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch exercises" });
+  }
+});
+
+
+app.get("/api/users/:_id/logs", async (req, res) => {
+  const _id = req.params._id
+
+  try {
+    const user = await User.findById(_id)
+    if (!user) res.status(404).json({ error: "User not found" })
+    const exercises = await Exercise.find({ userId: _id });
+    res.json({
+      _id: user._id,
+      username: user.username,
+      count: exercises.length,
+      log: exercises.map(ex => ({
+        description: ex.description,
+        duration: ex.duration,
+        date: ex.date.toDateString()
+      }))
+    })
+  } catch {
+    res.status(500).json({ error: "Server error" });
+
+  }
 })
 
 app.get("/api/users", (req, res) => {
