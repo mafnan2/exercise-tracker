@@ -22,40 +22,50 @@ app.post("/api/users", (req, res) => {
     if (err) return res.status(500).json({ err: "Database error" })
     res.json({
       username: data.username,
+      _id: data._id
     })
   })
 });
 
-app.post("/api/users/:_id/exercises", (req, res) => {
+app.post("/api/users/:_id/exercises", async (req, res) => {
   const userId = req.params._id;
   const { description, duration, date } = req.body;
 
-  User.findById(userId, (err, user) => {
-    if (err) return res.status(500).json({ error: "DB Error" });
+  try {
+    const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    console.log(user)
+    // Check if date exists and is valid; else use current date
+    let exerciseDate = new Date();
+    if (date) {
+      const parsedDate = new Date(date);
+      if (!isNaN(parsedDate.getTime())) {
+        exerciseDate = parsedDate;
+      }
+    }
+
     const newExercise = new Exercise({
       userId: user._id,
       username: user.username,
       description,
       duration: parseInt(duration),
-      date: date ? new Date(date) : new Date()
+      date: exerciseDate,
     });
 
-    newExercise.save((err, data) => {
-      if (err) return res.status(500).json({ error: "Database Error" });
+    const savedExercise = await newExercise.save();
 
-      res.json({
-        _id: user._id,
-        username: user.username,
-        description: data.description,
-        duration: data.duration,
-        date: data.date.toDateString()
-      });
+    res.json({
+      _id: user._id,
+      username: user.username,
+      description: savedExercise.description,
+      duration: savedExercise.duration,
+      date: savedExercise.date.toDateString(), // formatted string as required
     });
-  });
+  } catch (err) {
+    res.status(500).json({ error: "Database error" });
+  }
 });
+
 
 app.get("/api/users/:_id/exercises", (req, res) => {
   const userId = req.params._id
